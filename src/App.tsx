@@ -5,6 +5,7 @@ import { SignalField } from "./SignalField";
 import { SignalInspector } from "./SignalInspector";
 import type { SignalResult, SignalSnapshot } from "./types";
 import { emotionReading } from "./analysis";
+import { addUsage, emptyUsage, estimatedCost } from "./cost";
 
 const idleProbabilities = {
   neutral: 0.125,
@@ -28,6 +29,7 @@ function App() {
   const [result, setResult] = useState<SignalResult | null>(null);
   const [resultText, setResultText] = useState("");
   const [baseline, setBaseline] = useState<SignalSnapshot | null>(null);
+  const [sessionUsage, setSessionUsage] = useState(emptyUsage);
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [error, setError] = useState("");
   const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -52,11 +54,13 @@ function App() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: trimmedText }),
-          signal: controller.signal,
+          // Let started requests finish so their usage is counted even after edits.
+          // The effect's controller still prevents stale answers replacing the UI.
         });
 
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error ?? "Classification failed.");
+        setSessionUsage((total) => addUsage(total, (payload as SignalResult).usage));
         if (controller.signal.aborted) return;
 
         startTransition(() => {
@@ -66,6 +70,7 @@ function App() {
           setError("");
         });
       } catch (caughtError) {
+        setSessionUsage((total) => ({ ...total, unreported: total.unreported + 1 }));
         if (controller.signal.aborted) return;
         setRequestState("error");
         setError(caughtError instanceof Error ? caughtError.message : "Classification failed.");
@@ -199,6 +204,13 @@ function App() {
         onFreeze={() => { if (result && fresh) setBaseline({ text: resultText, result }); }}
         onClearBaseline={() => setBaseline(null)}
         onToggle={() => setInspectorOpen((open) => !open)} />
+      <aside className="session-cost" aria-label="Estimated cost since page refresh"
+        title={`Reference rate: Jev 1.12 at $0.042 / million input tokens, $0 output. Jev 1.13 rate unconfirmed. ${sessionUsage.input} input / ${sessionUsage.output} output tokens received. Excludes charges for requests with no usage response and any hosting fees.`}>
+        <span>SESSION COST · EST.</span>
+        <strong>${estimatedCost(sessionUsage).toFixed(6)} <small>USD</small></strong>
+        <span>{sessionUsage.completed} responses · resets on refresh</span>
+        {sessionUsage.unreported > 0 && <span>{sessionUsage.unreported} requests with unknown cost</span>}
+      </aside>
     </main>
   );
 }

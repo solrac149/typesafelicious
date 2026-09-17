@@ -6,6 +6,8 @@ The headline shows close alternatives when the leading probabilities differ by l
 
 ## Run locally
 
+The session-cost box totals received token usage in memory and resets on refresh. It estimates USD using the TypeSafe September 2026 cookbook's Jev 1.12 rates ($0.042 per million input tokens, $0 output); the Jev 1.13 account rate is unconfirmed. Rates live in `src/cost.ts`. Started requests finish to collect usage even if their answers are superseded by edits. Failed requests without usage reports are flagged and excluded; this is not an account billing ledger and excludes hosting fees.
+
 Requires Node.js 20.19+ or 22.12+ and a TypeSafe API key.
 
 ```bash

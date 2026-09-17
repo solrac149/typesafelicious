@@ -320,6 +320,25 @@ textarea::placeholder {
   color: rgba(243, 243, 238, 0.25);
 }
 
+.session-cost {
+  position: absolute;
+  z-index: 6;
+  right: 16px;
+  bottom: 62px;
+  display: grid;
+  gap: 6px;
+  max-width: calc(100% - 32px);
+  padding: 12px 14px;
+  border: 1px solid #5aff65;
+  color: var(--paper);
+  background: #171715;
+  font: 10px "DM Mono", monospace;
+  pointer-events: auto;
+}
+.session-cost strong { color: #5aff65; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.session-cost small { font-size: 10px; }
+.input-stage textarea { padding-bottom: 120px; }
+
 .input-footer {
   color: rgba(243, 243, 238, 0.58);
 }
@@ -441,6 +460,7 @@ textarea::placeholder {
 }
 
 #signal-inspector-content {
+  padding-bottom: 120px;
   background: rgb(243 243 238 / 90%);
   flex: 1;
   min-height: 0;
