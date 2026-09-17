@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 type SignalFieldProps = {
   probabilities: Record<string, number>;
-  activeLabel: string;
+  intensity: number;
 };
 
 type Particle = {
@@ -32,13 +32,13 @@ function buildParticles(count: number): Particle[] {
   }));
 }
 
-export function SignalField({ probabilities, activeLabel }: SignalFieldProps) {
+export function SignalField({ probabilities, intensity }: SignalFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const signalRef = useRef({ probabilities, activeLabel });
+  const signalRef = useRef({ probabilities, intensity });
 
   useEffect(() => {
-    signalRef.current = { probabilities, activeLabel };
-  }, [activeLabel, probabilities]);
+    signalRef.current = { probabilities, intensity };
+  }, [intensity, probabilities]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -53,6 +53,8 @@ export function SignalField({ probabilities, activeLabel }: SignalFieldProps) {
     let width = 0;
     let height = 0;
     let pixelRatio = 1;
+    let previousTime = 0;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const resize = () => {
       const bounds = canvas.getBoundingClientRect();
@@ -68,28 +70,35 @@ export function SignalField({ probabilities, activeLabel }: SignalFieldProps) {
     observer.observe(canvas);
     resize();
 
-    const draw = () => {
-      frame += 1;
+    const draw = (time = 0) => {
+      const strength = Math.max(0, Math.min(1, signalRef.current.intensity));
+      const elapsed = previousTime ? Math.min(time - previousTime, 50) / 16.67 : 0;
+      previousTime = time;
+      if (!reducedMotion.matches) frame += elapsed * (0.2 + strength * 1.8);
       context.clearRect(0, 0, width, height);
 
-      const { probabilities: current, activeLabel: label } = signalRef.current;
-      const entries = Object.entries(current).sort((left, right) => right[1] - left[1]);
-      const activeProbability = current[label] ?? 0;
+      const entries = Object.entries(signalRef.current.probabilities);
+      const total = entries.reduce((sum, [, probability]) => sum + probability, 0);
 
       particles.forEach((particle, index) => {
-        const entry = entries[index % Math.max(entries.length, 1)] ?? [label, 1];
-        const [emotion, probability] = entry;
+        // Assign colors by cumulative probability; movement depends on intensity only.
+        const position = ((index + 0.5) / particles.length) * total;
+        let cumulative = 0;
+        const [emotion] = entries.find(([, probability]) => {
+          cumulative += probability;
+          return position < cumulative;
+        }) ?? ["neutral", 1];
         const progress = (particle.offset + frame * 0.0007 * particle.speed) % 1;
         const direction = index % 2 === 0 ? 1 : -1;
         const centerY = height * (0.48 + (particle.lane - 0.5) * 0.4);
         const wave = Math.sin(progress * Math.PI * 4 + particle.lane * 8 + frame * 0.008);
         const x = direction > 0 ? progress * width : width - progress * width;
-        const pull = Math.sin(progress * Math.PI) * (activeProbability * 54 + probability * 84);
-        const y = centerY + wave * (12 + probability * 58) + (particle.lane - 0.5) * pull;
-        const alpha = 0.05 + probability * 0.5;
+        const pull = Math.sin(progress * Math.PI) * strength * 100;
+        const y = centerY + wave * (8 + strength * 58) + (particle.lane - 0.5) * pull;
+        const alpha = 0.25;
 
         context.fillStyle = `rgba(${colors[emotion] ?? colors.neutral}, ${alpha})`;
-        context.fillRect(x, y, particle.size * (1 + probability), particle.size);
+        context.fillRect(x, y, particle.size, particle.size);
       });
 
       context.strokeStyle = "rgba(20, 20, 18, 0.08)";

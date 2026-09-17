@@ -1,6 +1,8 @@
 # Jev Signal
 
-A live semantic signal visualizer powered by TypeSafe AI's Jev model. As text is entered, the app evaluates intent, emotion, and urgency in parallel and renders the resulting probability distribution as an animated field.
+A live semantic signal visualizer powered by TypeSafe AI's Jev model. As text is entered, the app evaluates intent, emotion, urgency, and emotional intensity in one request. Emotion probabilities determine the particle colors; the intensity Score controls movement independently of confidence.
+
+The headline shows close alternatives when the leading probabilities differ by less than 15 percentage points, and "unclear" when no emotion reaches 40%. These are display heuristics, not calibrated correctness thresholds. The inspector explains confidence, exposes the exact questions and intensity rubric, and lets you freeze a completed response as a baseline. Edit the text and compare intent/emotion probability changes, urgency, and intensity. The baseline stays in memory for the current page session and requires no additional API call.
 
 ## Run locally
 

@@ -3,7 +3,8 @@ import { Trash2 } from "lucide-react";
 
 import { SignalField } from "./SignalField";
 import { SignalInspector } from "./SignalInspector";
-import type { SignalResult } from "./types";
+import type { SignalResult, SignalSnapshot } from "./types";
+import { emotionReading } from "./analysis";
 
 const idleProbabilities = {
   neutral: 0.125,
@@ -25,6 +26,8 @@ function formatLabel(label: string) {
 function App() {
   const [text, setText] = useState("");
   const [result, setResult] = useState<SignalResult | null>(null);
+  const [resultText, setResultText] = useState("");
+  const [baseline, setBaseline] = useState<SignalSnapshot | null>(null);
   const [requestState, setRequestState] = useState<RequestState>("idle");
   const [error, setError] = useState("");
   const [inspectorOpen, setInspectorOpen] = useState(false);
@@ -41,6 +44,7 @@ function App() {
     }
 
     setRequestState("reading");
+    setError("");
     const controller = new AbortController();
     const timeout = window.setTimeout(async () => {
       try {
@@ -53,9 +57,11 @@ function App() {
 
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error ?? "Classification failed.");
+        if (controller.signal.aborted) return;
 
         startTransition(() => {
           setResult(payload as SignalResult);
+          setResultText(trimmedText);
           setRequestState("resolved");
           setError("");
         });
@@ -72,7 +78,9 @@ function App() {
     };
   }, [text]);
 
-  const emotion = result?.emotion.choice ?? "listening";
+  const reading = result ? emotionReading(result.emotion) : null;
+  const emotion = reading?.headline ?? "listening";
+  const fresh = requestState === "resolved" && resultText === text.trim();
   const intent = result?.intent.choice ?? "awaiting signal";
   const probabilities = result?.emotion.probabilities ?? idleProbabilities;
   const sortedProbabilities = Object.entries(probabilities).sort((left, right) => right[1] - left[1]);
@@ -103,7 +111,7 @@ function App() {
   return (
     <main ref={shellRef} className={`app-shell${inspectorOpen ? "" : " app-shell--inspector-collapsed"}`}>
       <section className="output-stage" aria-live="polite">
-        <SignalField probabilities={probabilities} activeLabel={result?.emotion.choice ?? "neutral"} />
+        <SignalField probabilities={probabilities} intensity={(result?.intensity.score ?? 0) / 4} />
 
         <header className="masthead">
           <div className="brand">JEV / SIGNAL</div>
@@ -116,15 +124,20 @@ function App() {
 
         <div className="result-lockup">
           <div className="result-kicker">
-            <span>DOMINANT EMOTION</span>
-            <span>{result ? `${Math.round(confidence * 100)}% CONFIDENCE` : "LIVE ANALYSIS"}</span>
+            <span>{result && !fresh ? "PREVIOUS RESPONSE" : reading?.description ?? "EXPRESSED EMOTION"}</span>
+            <span>{reading ? `P(${result!.emotion.choice.toUpperCase()}) ${Math.round(reading.probability * 100)}%` : "LIVE ANALYSIS"}</span>
           </div>
-          <h1 ref={emotionRef} key={emotion} className={`emotion-word emotion-word--${emotion}`}>
+          <h1 ref={emotionRef} key={emotion} className={`emotion-word emotion-word--${result?.emotion.choice ?? "neutral"}${emotion.includes(" / ") ? " emotion-word--pair" : ""}`}>
             {formatLabel(emotion)}
           </h1>
           <div className="intent-line">
             <span>PRIMARY INTENT</span>
             <strong>{formatLabel(intent)}</strong>
+          </div>
+          <div className="signal-dimensions">
+            <span>INTENSITY {result ? `${result.intensity.score.toFixed(2)} / 4` : "—"}</span>
+            <meter min={0} max={4} value={result?.intensity.score ?? 0} aria-label="Expressed emotional intensity" />
+            <span title="Distribution concentration, not probability of correctness">CONFIDENCE {result ? confidence.toFixed(2) : "—"}</span>
           </div>
         </div>
 
@@ -177,11 +190,14 @@ function App() {
           aria-label="Text to classify"
         />
         <footer className="input-footer">
-          <span>{error || "CHOICE × 2 / NOUL × 1"}</span>
+          <span>{error || "CHOICE × 2 / NOUL × 1 / SCORE × 1"}</span>
           <span>{result ? `${result.usage.input_tokens} INPUT TOKENS` : "PROBABILISTIC OUTPUT"}</span>
         </footer>
       </section>
       <SignalInspector result={result} state={requestState} open={inspectorOpen}
+        resultText={resultText} baseline={baseline} fresh={fresh}
+        onFreeze={() => { if (result && fresh) setBaseline({ text: resultText, result }); }}
+        onClearBaseline={() => setBaseline(null)}
         onToggle={() => setInspectorOpen((open) => !open)} />
     </main>
   );

@@ -152,6 +152,18 @@ textarea {
   color: var(--magenta);
 }
 
+.emotion-word--pair { font-size: clamp(1.5rem, 6vw, 5rem); line-height: 1; }
+.signal-dimensions { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-top: 10px; font: 10px "DM Mono", monospace; }
+.signal-dimensions meter { width: 80px; height: 8px; accent-color: var(--magenta); }
+.baseline-controls { padding: 0 18px 18px; line-height: 1.5; }
+.baseline-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.baseline-actions button { padding: 8px 12px; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); cursor: pointer; }
+.baseline-actions button:disabled { opacity: 0.4; cursor: default; }
+.baseline-controls blockquote { margin: 8px 0; padding-left: 12px; border-left: 2px solid var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 100px; overflow: auto; }
+.inspector-explanation { padding: 0 18px; line-height: 1.6; }
+.intensity-rubric { margin-bottom: 20px; line-height: 1.5; }
+.intensity-rubric li { margin-bottom: 8px; }
+
 .emotion-word--sad,
 .emotion-word--anxious {
   color: #1684cd;
@@ -335,6 +347,7 @@ textarea::placeholder {
   .emotion-word {
     font-size: 5rem;
   }
+  .emotion-word--pair { font-size: clamp(1.4rem, 6vw, 4rem); }
 
   .probability-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -363,6 +376,7 @@ textarea::placeholder {
   .emotion-word {
     font-size: 3.2rem;
   }
+  .emotion-word--pair { font-size: clamp(1.25rem, 6vw, 2.25rem); }
 
   .result-lockup {
     top: 22%;

@@ -35,14 +35,18 @@ test("keeps the key upstream and preserves the app response contract", async () 
   const originalFetch = globalThis.fetch;
   let calls = 0;
   const choice = { type: "choice", choice: "happy", confidence: 0.9, probabilities: { happy: 0.9, sad: 0.1 } };
+  const intensity = { type: "score", score: 2.4, confidence: 0.6,
+    probabilities: { 0: 0, 1: 0, 2: 0.6, 3: 0.4, 4: 0 },
+    legend: { 0: "None", 1: "Restrained", 2: "Explicit", 3: "Emphatic", 4: "Overwhelming" } };
   globalThis.fetch = async (_url, init) => {
     calls++;
     assert.equal(new Headers(init.headers).get("Authorization"), "Bearer test-only-secret");
     const payload = JSON.parse(init.body);
     assert.deepEqual(payload.state, { message: "hello" });
-    assert.deepEqual(Object.keys(payload.questions), ["intent", "emotion", "urgency"]);
+    assert.deepEqual(Object.keys(payload.questions), ["intent", "emotion", "urgency", "intensity"]);
+    assert.equal(payload.questions.intensity.type, "score");
     return Response.json({ model: "test-model", answers: {
-      intent: choice, emotion: choice, urgency: { type: "noul", noul: 0.2 },
+      intent: choice, emotion: choice, urgency: { type: "noul", noul: 0.2 }, intensity,
     }, usage: { input_tokens: 12, output_tokens: 4 } });
   };
   try {
@@ -52,6 +56,7 @@ test("keeps the key upstream and preserves the app response contract", async () 
     assert.equal(response.status, 200);
     const result = await response.json();
     assert.deepEqual(result.emotion, choice);
+    assert.deepEqual(result.intensity, intensity);
     assert.equal(result.urgency, 0.2);
     assert.equal(result.usage.output_tokens, 4);
     assert.equal(typeof result.latencyMs, "number");
