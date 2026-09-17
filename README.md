@@ -1,3 +1,36 @@
+# Jev Signal
+
+A live semantic signal visualizer powered by TypeSafe AI's Jev model. As text is entered, the app evaluates intent, emotion, and urgency in parallel and renders the resulting probability distribution as an animated field.
+
+## Run locally
+
+Requires Node.js 20.19+ or 22.12+ and a TypeSafe API key.
+
+```bash
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Set `TYPESAFE_API_KEY` in `.env`, then open <http://localhost:5173>. The API key is used only by the local Express server and is never sent to the browser.
+
+```bash
+npm run build
+npm start
+```
+
+The production server runs at <http://localhost:3001> by default. Set `PORT` to override it.
+
+## OpenAI Sites hosting
+
+The same React interface is hosted with a server-side Worker (`worker.ts`). Both the local Express server and the hosted Worker use `api.ts` for Jev classification. `npm run build` produces the frontend in `dist/client` and the bundled Worker in `dist/server/index.js`; `npm test` checks the built Worker's API behavior with a simulated Jev response.
+
+Set `TYPESAFE_API_KEY` as a **secret** in the Site's runtime settings, then deploy to apply it. Never put the key in `VITE_*` variables, the hosting manifest, or source control. The browser only calls the same-origin `/api/classify` route. Request logging is disabled in the SDK, and API responses are not cached.
+
+The initial deployment is private and relies on Sites' audience controls. Before making it public, add appropriate authentication or usage limits to protect the Jev allowance; the origin check alone is not authentication or a rate limit.
+
+---
+
 # TypeSafe AI / Jev — Architecture Notes and Research Plan
 
 ## Executive Summary
