@@ -205,7 +205,7 @@ function App() {
         onClearBaseline={() => setBaseline(null)}
         onToggle={() => setInspectorOpen((open) => !open)} />
       <aside className="session-cost" aria-label="Estimated cost since page refresh"
-        title={`Reference rate: Jev 1.12 at $0.042 / million input tokens, $0 output. Jev 1.13 rate unconfirmed. ${sessionUsage.input} input / ${sessionUsage.output} output tokens received. Excludes charges for requests with no usage response and any hosting fees.`}>
+        title={`Account rate: $0.042 / million input tokens; output is free. ${sessionUsage.input} input / ${sessionUsage.output} output tokens received. Excludes charges for requests with no usage response and any hosting fees.`}>
         <span>SESSION COST · EST.</span>
         <strong>${estimatedCost(sessionUsage).toFixed(6)} <small>USD</small></strong>
         <span>{sessionUsage.completed} responses · resets on refresh</span>

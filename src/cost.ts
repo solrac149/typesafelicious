@@ -1,6 +1,5 @@
-// Reference estimate, not account billing: Jev 1.12, September 2026.
-// https://docs.typesafe.ai/cookbooks/parallel_questions
-// Jev 1.13 pricing has not been independently confirmed.
+// Account rates confirmed by the user’s TypeSafe billing screen, September 17, 2026.
+// Usage-derived estimate; not an account billing ledger.
 export const INPUT_USD_PER_MILLION = 0.042;
 export const OUTPUT_USD_PER_MILLION = 0;
 
